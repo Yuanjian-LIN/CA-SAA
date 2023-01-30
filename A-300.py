@@ -4,8 +4,8 @@ import numba as nb
 import numpy as np
 import concurrent.futures
 
-# 根据两点法 和 线段法  计算，
-# 这是根据 二维图片 获取对应的 两点法 和 线段法的比率
+# According to the two-point method and the line segment method,
+# This is the statistical value of the two point method and the line segment method corresponding to two-dimensional image acquisition
 @nb.jit(nopython=True)
 def obtain_line_and_point(pic_array, sample_time, size_gap):
     row, column = pic_array.shape
@@ -26,10 +26,10 @@ def obtain_line_and_point(pic_array, sample_time, size_gap):
                 end_j = int(start_j + size * np.sin(angle * 3.14 / 180))
                 if 0 <= int(end_i) < row and 0 <= int(end_j) < column:
                     flag = 1
-#             两点法
+#             Two-point method
             if pic_array[start_i][start_j] == 255 and pic_array[end_i][end_j] == 255:
                 count_two_point += 1
-        #     线段法
+        #     Line segment method
             i_in_line = np.linspace(start_i, end_i, 200)
             j_in_line = np.linspace(start_j, end_j, 200)
             temp_flag = 1
@@ -46,8 +46,8 @@ def obtain_line_and_point(pic_array, sample_time, size_gap):
     return size_list, point_list, line_list
 
 
-# 根据两点法 和 线段法  计算
-# 这是计算 构建的三维 裂隙模型的 两点法 及 线段法的 比率
+# 
+# This is to calculate the statistics of the two point method and the line segment method for the reconstruction of the three dimensional model
 @nb.jit(nopython=True)
 def obtain_line_and_point_three_dimension(pic_array_3D, sample_time, size_gap):
     pic_number, row, column = pic_array_3D.shape
@@ -71,10 +71,10 @@ def obtain_line_and_point_three_dimension(pic_array_3D, sample_time, size_gap):
                 end_k = int(start_k  + size * np.sin(angle_2 * 3.14 / 180))
                 if 0 <= int(end_i) < pic_number and 0 <= int(end_j) < row and 0 <= int(end_k) < column:
                     flag = 1
-#             两点法
+#             Two-point method
             if pic_array_3D[start_i,start_j, start_k] == 255 and pic_array_3D[end_i, end_j, end_k] == 255:
                 count_two_point += 1
-        #     线段法
+        #     Line segment method
             i_in_line = np.linspace(start_i, end_i, 200)
             j_in_line = np.linspace(start_j, end_j, 200)
             k_in_line = np.linspace(start_k, end_k, 200)
@@ -159,7 +159,7 @@ def change_two_point(pic_number, row, column, pic_3D, change_time, critical_zone
         pic_3D = change_to_0(pic_number, row, column, pic_3D, critical_zone_number)
     return pic_3D
 
-# 单线程产生下一个
+# A single thread generates the next
 def generate_next_pic_and_calculate(pic_number, new_row, new_column, pre_pic, change_time, sample_time, point_list_origin, line_list_origin, critical_zone_number, size_gap):
     next_pic = change_two_point(pic_number, new_row, new_column, pre_pic, change_time, critical_zone_number)
     size_list, point_list, line_list = obtain_line_and_point_three_dimension(next_pic, sample_time, size_gap)
@@ -167,7 +167,7 @@ def generate_next_pic_and_calculate(pic_number, new_row, new_column, pre_pic, ch
     next_judge = max_error
     return next_pic, next_judge, size_list, point_list, line_list
 
-# 多线程并行产生 并计算
+# Multithreading generates and computes in parallel
 def parallel_generate_pic_and_calculate(pic_number, new_row, new_column, pre_pic, change_time, sample_time, point_list_origin, line_list_origin, process_number, critical_zone_number, size_gap):
     with concurrent.futures.ProcessPoolExecutor() as executor:
         generate_pic_calculate = []
@@ -211,8 +211,8 @@ def main_program(origin_pic, pic_number, pic_row, pic_column, change_time, criti
 
     new_row, new_column = pic_row, pic_column
 
-    # 模拟退火算法的基本参数
-    markovlength = 10000  # 每次降温迭代次数，建议为5或者10
+    # The basic parameters of simulated annealing algorithm
+    markovlength = 10000  # Number of iterations per cooling
     decayscale = 0.99
     temperature = 100
 
@@ -229,8 +229,8 @@ def main_program(origin_pic, pic_number, pic_row, pic_column, change_time, criti
         temperature *= decayscale
         for i in range(markovlength):
             next_judge, next_pic, size_list, point_list, line_list = parallel_generate_pic_and_calculate(pic_number, new_row, new_column, pre_pic, change_time, sample_time, point_list_origin, line_list_origin, process_number, critical_zone_number, size_gap)
-            # 第 2 处需要修改
-            # 求最大值就是:  >   求最小值就是:  <
+            # 
+            # 
             if next_judge < best_judge:
                 best_pic = next_pic.copy()
                 best_judge = next_judge
@@ -251,7 +251,7 @@ def main_program(origin_pic, pic_number, pic_row, pic_column, change_time, criti
                     file.write('%r   %r   %r  \n' % (size_list[i], point_list[i], line_list[i]))
                 file.close()
 
-                # 将最好的结果自动 更新，并替换图片
+                # Update and replace images
                 for i in range(pic_number):
                     temp_pic = np.zeros([pic_row, pic_column], dtype=np.uint8)
                     for j in range(pic_row):
@@ -259,8 +259,8 @@ def main_program(origin_pic, pic_number, pic_row, pic_column, change_time, criti
                             temp_pic[j][k] = best_pic[i, j, k]
                     pic_name = '300\\%d.tif' % i
                     cv2.imwrite(pic_name, temp_pic)
-            # 第 3 处需要修改
-            # 求最大值就是:  >   求最小值就是:  <
+            # 
+            # 
             if next_judge < pre_judge:
                 pre_pic = next_pic.copy()
                 pre_judge = next_judge
@@ -272,25 +272,25 @@ def main_program(origin_pic, pic_number, pic_row, pic_column, change_time, criti
                     pre_pic = next_pic.copy()
                     pre_judge = next_judge
 
-# 这个__name__ == '__main__'  一定要加，不然在concurrent并行运算的模块中会出错
+# 
 if __name__ == '__main__':
-    # 产生图片的数量
+    # The number of images produced
     pic_number = 300
-    # 图片的row大小
+    # The row size of the picture
     pic_row = 300
-    # 图片column大小
+    # Picture column size
     pic_column = 300
-    # 目标图像，就是以该图像为基准生成图像
+    # Reference image import
     target_pic = '4.tif'
-    # 周围有多少 个 临界点，就开始转换，总共 有 26个
+    # Conversion threshold
     critical_zone_number = 8
-    # 每次细胞自动机运动次数，每次运动次数越小，生成图片越精细，但收敛速度越慢
+    # 
     change_time = int(pic_number * pic_row * pic_column / 30)
-    # 线段法 和 两点法 测量比率 测量次数
-    # 测量次数越多，计算越慢
+    # Count the number of line segment method and two point method each time
+    # The more measurements, the slower the calculation
     sample_time = 10000
-    # 并行运行程序个数
+    # Parallel computation parameter
     process_number = 10
-    # 两点法，线段法测量 间距  0 2 4
+    # 
     size_gap = 1
     main_program(target_pic, pic_number, pic_row,  pic_column, change_time, critical_zone_number, sample_time, process_number, size_gap)
