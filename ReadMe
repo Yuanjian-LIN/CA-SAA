@@ -1,7 +1,7 @@
-Description
+## Description
 A-300 This program is python language development of porous media 3D reconstruction algorithm, download and run it will output 300 (300*300 pixel size) continuous slice image. In the output structure, white represents the pores and black represents the matrix.
 
-Installation
+##Installation
 Winpython64-3.10
 
 Requirements
